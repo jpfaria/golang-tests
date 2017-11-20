@@ -1,0 +1,6 @@
+page() = "https://www.americanas.com.br/produto/9935768"
+
+news[]: page -> $("tr.athing")
+    title: $(".title a.storylink").text
+    site: $(".title span.sitestr").text
+    link: $(".title a.storylink").href
