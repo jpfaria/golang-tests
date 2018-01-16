@@ -7,6 +7,7 @@ import (
 	"plugin"
 	"github.com/jpfaria/golang-tests/go-plugin-example/core"
 	"errors"
+	"fmt"
 )
 
 type result struct {
@@ -33,6 +34,7 @@ func handle(c echo.Context) error {
 	plug, err := plugin.Open(mod)
 
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
 
@@ -41,6 +43,7 @@ func handle(c echo.Context) error {
 	symPlugin, err := plug.Lookup("Plugin")
 
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
 
@@ -49,7 +52,9 @@ func handle(c echo.Context) error {
 	var p core.Plugin
 	p, ok := symPlugin.(core.Plugin)
 	if !ok {
-		return errors.New("unexpected type from module symbol")
+		errmsg := "unexpected type from module symbol"
+		fmt.Println(errmsg)
+		return errors.New(errmsg)
 	}
 
 	// 4. use the module
