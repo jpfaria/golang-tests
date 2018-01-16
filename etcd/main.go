@@ -14,6 +14,7 @@ import (
 	"strings"
 	"encoding/json"
 	"github.com/jeremywohl/flatten"
+	"github.com/imdario/mergo"
 )
 
 var (
@@ -42,7 +43,7 @@ func main() {
 	defer cli.Close() // make sure to close the client
 
 	elapsed1 := time.Since(start1)
-	log.Printf("Binomial took %s", elapsed1)
+	fmt.Printf("Binomial took %s\n", elapsed1)
 
 	start2 := time.Now()
 
@@ -57,33 +58,35 @@ func main() {
 	}
 
 	elapsed2 := time.Since(start2)
-	log.Printf("Binomial took %s", elapsed2)
+	fmt.Printf("Binomial took %s\n", elapsed2)
 
 	start3 := time.Now()
 
-	m := make(map[string]interface{})
+	map1 := make(map[string]interface{})
 
 	ctx1, cancel1 := context.WithTimeout(context.Background(), requestTimeout)
-	resp1, err := cli.Get(ctx1, "_revision/hefesto", clientv3.WithPrefix(), clientv3.WithSort(clientv3.SortByKey, clientv3.SortAscend))
+	resp1, err := cli.Get(ctx1, "_config/hefesto", clientv3.WithPrefix(), clientv3.WithSort(clientv3.SortByKey, clientv3.SortAscend))
 	cancel1()
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	elapsed3 := time.Since(start3)
+	fmt.Printf("Binomial took %s\n", elapsed3)
+
 	for _, ev := range resp1.Kvs {
 		fmt.Printf("%s : %s\n", ev.Key, ev.Value)
 		fields := strings.Split(string(ev.Key), "/")
 		key := fields[len(fields)-1]
-		m[key] = string(ev.Value)
+		map1[key] = string(ev.Value)
 	}
 
-	tree := unflatten.Unflatten(m, func(k string) []string { return strings.Split(k, ".") })
+	tree1 := unflatten.Unflatten(map1, func(k string) []string { return strings.Split(k, ".") })
 
-	unflat, _ := json.Marshal(tree)
+	unflat1, _ := json.Marshal(tree1)
 
-	log.Printf("JSON: %s", unflat)
+	fmt.Printf("JSON: %s\n", unflat1)
 
-	elapsed3 := time.Since(start3)
-	log.Printf("Binomial took %s", elapsed3)
 
 	/*
 	t := map[string]interface{}{
@@ -94,15 +97,50 @@ func main() {
 		},
 		"z": 1.4567,
 	}
-	flat, err := flatten.Flatten(t, "", flatten.DotStyle)
+	flat1, err := flatten.Flatten(t, "", flatten.DotStyle)
 	*/
 
-	//flat, err := flatten.FlattenString(string(unflat), "", flatten.DotStyle)
+	//flat1, err := flatten.FlattenString(string(unflat1), "", flatten.DotStyle)
 
-	flat, err := flatten.Flatten(tree, "", flatten.DotStyle)
+	flat1, err := flatten.Flatten(tree1, "", flatten.DotStyle)
 
-	jsonString, _ := json.Marshal(flat)
+	json1, _ := json.Marshal(flat1)
 
-	log.Printf("FLAT: %s", jsonString)
+	fmt.Printf("FLAT: %s\n", json1)
+
+	map2 := make(map[string]interface{})
+
+	ctx2, cancel2 := context.WithTimeout(context.Background(), requestTimeout)
+	resp2, err := cli.Get(ctx2, "_revision/hefesto", clientv3.WithPrefix(), clientv3.WithSort(clientv3.SortByKey, clientv3.SortAscend))
+	cancel2()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, ev := range resp2.Kvs {
+		fmt.Printf("%s : %s\n", ev.Key, ev.Value)
+		fields := strings.Split(string(ev.Key), "/")
+		key := fields[len(fields)-1]
+		map2[key] = string(ev.Value)
+	}
+
+	tree2 := unflatten.Unflatten(map2, func(k string) []string { return strings.Split(k, ".") })
+
+	unflat2, _ := json.Marshal(tree2)
+
+	fmt.Printf("JSON: %s\n", unflat2)
+
+	flat2, err := flatten.Flatten(tree2, "", flatten.DotStyle)
+
+	json2, _ := json.Marshal(flat2)
+
+	fmt.Printf("FLAT: %s\n", json2)
+
+	mergo.Merge(&tree2, tree1)
+
+	json3, _ := json.Marshal(tree2)
+
+	fmt.Printf("MERGED: %s\n", json3)
+
 
 }

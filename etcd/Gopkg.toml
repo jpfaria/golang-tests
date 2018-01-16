@@ -36,3 +36,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/jeremywohl/flatten"
+
+[[constraint]]
+  name = "github.com/imdario/mergo"
+  version = "0.3.0"
